@@ -1,6 +1,7 @@
 package com.example.elad.breakingbadmap;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
@@ -10,13 +11,24 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class MapsActivity extends AppCompatActivity
@@ -29,6 +41,8 @@ public class MapsActivity extends AppCompatActivity
     protected GoogleApiClient mGoogleApiClient;
     private Map mMap;
 
+
+
     SQLiteDatabase db2;
 
     @Override
@@ -38,6 +52,8 @@ public class MapsActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        setTitle("Breaking Bad Map"); // TODO: create string list in xml
 
         buildGoogleApiClient();
         mDB = new BreakingBadLiteDB(this);
@@ -49,10 +65,21 @@ public class MapsActivity extends AppCompatActivity
         mapFragment.getMapAsync(this);
         updateValuesFromBundle(savedInstanceState);
 
+        Button btnZoomAll = (Button)findViewById(R.id.btnZoomAll);
+        btnZoomAll.setOnClickListener(btnListener);
 
         Log.d(TAG, "on Create 1");
     }
 
+    private View.OnClickListener btnListener = new View.OnClickListener()
+    {
+
+        public void onClick(View v)
+        {
+            mMap.zoomToAllLocations();
+        }
+
+    };
 
     @Override
     protected void onStart() {
@@ -86,15 +113,13 @@ public class MapsActivity extends AppCompatActivity
     public void onMapReady(GoogleMap googleMap) {
         mMap.onMapReady(googleMap);
 
-
-        LatLng point = mDB.getDummy();
-        if (point != null) {
-            mMap.addMarker(point);
-            mMap.moveCamera(point);
-        }
-
+        List<BreakingBadLocations> points = mDB.getLocations();
+        mMap.addMarkerPoints(points);
 
     }
+
+
+
 
 
     public void updateUI() {

@@ -9,6 +9,9 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,16 +25,22 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Created by Elad on 01/04/2016.
@@ -47,17 +56,19 @@ public class Map implements OnMapReadyCallback, GoogleApiClient.OnConnectionFail
     public Location mLastLocation;
     LocationRequest mLocationRequest;
     public boolean mRequestingLocationUpdates = true;
-    public Location mCurrentLocation;
+
     public String mLastUpdateTime;
     private GoogleMap mMap;
 
     public static final double DEFAULT_LAT = 32.1162781;
     public static final double DEFAULT_LON = 34.8252417;
+    public Location mCurrentLocation;
 
     private static final String REQUESTING_LOCATION_UPDATES_KEY = "location_update_key";
     private static final String LOCATION_KEY = "location_key";
     private static final String LAST_UPDATED_TIME_STRING_KEY = "last_updated_time_key";
 
+    private List<Marker> mMarkers = new ArrayList<Marker>();
     Activity mActivity;
 
     Map(Activity iMainActiviy, GoogleApiClient iGoogleApiClient){
@@ -142,14 +153,131 @@ public class Map implements OnMapReadyCallback, GoogleApiClient.OnConnectionFail
 
 
         getMap().getUiSettings().setZoomControlsEnabled(true);
+
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+
+            @Override
+            public boolean onMarkerClick(Marker m) {
+                Log.d(TAG, "onMarkerClick 0");
+                m.showInfoWindow();
+                Log.d(TAG, "onMarkerClick 1");
+                return true;
+            }
+        });
+
+        // Setting a custom info window adapter for the google map
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+
+            // Use default InfoWindow frame
+            @Override
+            public View getInfoWindow(Marker arg0) {
+                return null;
+            }
+
+            // Defines the contents of the InfoWindow
+            @Override
+            public View getInfoContents(Marker m) {
+
+                // Getting view from the layout file info_window_layout
+                View v = mActivity.getLayoutInflater().inflate(R.layout.info_window, null);
+
+                // Getting the position from the marker
+                LatLng latLng = m.getPosition();
+
+                TextView txtInfoContentName = (TextView) v.findViewById(R.id.infocontent_name);
+
+                // Getting reference to the TextView to set latitude
+                TextView tvLat = (TextView) v.findViewById(R.id.tv_lat);
+
+                // Getting reference to the TextView to set longitude
+                TextView tvLng = (TextView) v.findViewById(R.id.tv_lng);
+
+                txtInfoContentName.setText(m.getTitle());
+
+                // Setting the latitude
+                tvLat.setText("Latitude:" + latLng.latitude);
+
+                // Setting the longitude
+                tvLng.setText("Longitude:"+ latLng.longitude);
+
+                // Returning the view containing InfoWindow contents
+                return v;
+
+            }
+        });
     }
 
-    public void addMarker(LatLng point){
+    public Marker addMarker(LatLng point){
 
-        getMap().addMarker(new MarkerOptions()
+        return getMap().addMarker(new MarkerOptions()
                 .position(point)
                 .title("Dummy Point"));
     }
+
+    public Marker addMarker(MarkerOptions options){
+
+        return getMap().addMarker(options);
+
+    }
+
+
+
+    public void zoomToAllLocations(){
+
+        if (mMarkers.size() == 0){
+            return;
+        }
+
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for (Marker marker : mMarkers) {
+            builder.include(marker.getPosition());
+        }
+
+
+        LatLngBounds bounds = builder.build();
+        Log.d(TAG, bounds.toString());
+
+        // begin new code:
+        int width = mActivity.getResources().getDisplayMetrics().widthPixels;
+        int height = mActivity.getResources().getDisplayMetrics().heightPixels;
+        int padding = (int) (width * 0.12); // offset from edges of the map 12% of screen
+
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+
+        mMap.moveCamera(cu);
+    }
+
+    public void addMarkerPoints(List<BreakingBadLocations> points){
+
+        Log.d(TAG, "addMarkerPoints 0");
+        Log.d(TAG, "Points size: " + points.size());
+
+
+        mMarkers.clear();
+        if (points != null){
+            Iterator<BreakingBadLocations> pointsIter = points.iterator();
+            while (pointsIter.hasNext()) {
+                BreakingBadLocations currLocation =  pointsIter.next();
+                Marker m = mMap.addMarker(new MarkerOptions()
+                        .position(currLocation.mLatLng)
+                        .title(currLocation.mName));
+                mMarkers.add(m);
+            }
+        }
+
+        zoomToAllLocations();
+
+        Log.d(TAG, "addMarkerPoints 1");
+
+    }
+
+
+
+
+
+
 
     private void GetLastLocation() {
         if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -202,6 +330,13 @@ public class Map implements OnMapReadyCallback, GoogleApiClient.OnConnectionFail
     }
 
     private void initCamera(Location location) {
+        Log.d(TAG, "initCamera 0");
+
+        if (location == null){
+            Log.d(TAG, "location is null. Aborting");
+            Log.d(TAG, "initCamera exit0");
+            return;
+        }
         CameraPosition position = CameraPosition.builder()
                 .target(new LatLng(location.getLatitude(),
                         location.getLongitude()))
@@ -217,6 +352,7 @@ public class Map implements OnMapReadyCallback, GoogleApiClient.OnConnectionFail
 
 
         getMap().getUiSettings().setZoomControlsEnabled(true);
+        Log.d(TAG, "initCamera 1");
     }
 
 
@@ -233,7 +369,9 @@ public class Map implements OnMapReadyCallback, GoogleApiClient.OnConnectionFail
     }
 
     public void onPause() {
-        stopLocationUpdates();
+        if (mGoogleApiClient.isConnected() && !mRequestingLocationUpdates) {
+            stopLocationUpdates();
+        }
     }
 
     protected void startLocationUpdates() {
