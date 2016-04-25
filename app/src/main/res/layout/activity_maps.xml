@@ -9,14 +9,59 @@
     tools:layout="@layout/dummy_mapviewfragment">
 
     <Button
-    android:id="@+id/btnZoomAll"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_gravity="left|top"
-    android:text="Zoom To ALL"
-    android:padding="10dp"
-    android:layout_marginTop="10dp"
-    android:paddingRight="10dp"/>
+        android:id="@+id/btnZoomAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|top"
+        android:text="Zoom To ALL"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"
+        android:paddingRight="10dp"/>
+
+    <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/bb_coordinator"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        >
+
+        <android.support.design.widget.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/bb_toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+                app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+        </android.support.design.widget.AppBarLayout>
+
+        <!-- Your scrollable view -->
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/bb_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+        <include layout="@layout/bottom_sheet"
+            android:id="@+id/bb_bottom_sheet"/>
+
+        <android.support.design.widget.FloatingActionButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/bb_fab"
+            android:layout_gravity="end"
+            android:visibility="gone"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:clickable="true"
+            android:src="@drawable/ic_action_add" />
+
+    </android.support.design.widget.CoordinatorLayout>
+
 
 </fragment>
 

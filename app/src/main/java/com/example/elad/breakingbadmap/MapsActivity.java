@@ -21,9 +21,19 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 
 import java.util.ArrayList;
@@ -42,6 +52,8 @@ public class MapsActivity extends AppCompatActivity
     private Map mMap;
 
 
+    RecyclerView recyclerView;
+    boolean showFAB = true;
 
     SQLiteDatabase db2;
 
@@ -68,6 +80,86 @@ public class MapsActivity extends AppCompatActivity
         Button btnZoomAll = (Button)findViewById(R.id.btnZoomAll);
         btnZoomAll.setOnClickListener(btnListener);
 
+
+
+       /* recyclerView = (RecyclerView) findViewById(R.id.bb_list);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setItemAnimator(new DefaultItemAnimator());*/
+
+
+        /**
+         * Bottom Sheet
+         */
+
+        // To handle FAB animation upon entrance and exit
+        final Animation growAnimation = AnimationUtils.loadAnimation(this, R.anim.simple_grow);
+        final Animation shrinkAnimation = AnimationUtils.loadAnimation(this, R.anim.simple_shrink);
+
+
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.bb_fab);
+
+        fab.setVisibility(View.VISIBLE);
+        fab.startAnimation(growAnimation);
+
+
+        shrinkAnimation.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                fab.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+
+        CoordinatorLayout coordinatorLayout = (CoordinatorLayout) findViewById(R.id.bb_coordinator);
+        View bottomSheet = coordinatorLayout.findViewById(R.id.bb_bottom_sheet);
+
+        BottomSheetBehavior behavior = BottomSheetBehavior.from(bottomSheet);
+
+        behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+
+                switch (newState) {
+
+                    case BottomSheetBehavior.STATE_DRAGGING:
+                        if (showFAB)
+                            fab.startAnimation(shrinkAnimation);
+                        break;
+
+                    case BottomSheetBehavior.STATE_COLLAPSED:
+                        showFAB = true;
+                        fab.setVisibility(View.VISIBLE);
+                        fab.startAnimation(growAnimation);
+                        break;
+
+                    case BottomSheetBehavior.STATE_EXPANDED:
+                        showFAB = false;
+                        break;
+                    case BottomSheetBehavior.STATE_HIDDEN:
+                        showFAB = false;
+                        break;
+
+
+                }
+
+            }
+
+            @Override
+            public void onSlide(View bottomSheet, float slideOffset) {
+
+            }
+        });
         Log.d(TAG, "on Create 1");
     }
 
